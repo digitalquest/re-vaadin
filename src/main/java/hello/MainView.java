@@ -4,14 +4,20 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.upload.Receiver;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.Route;
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 @Route
 public class MainView extends VerticalLayout {
@@ -33,15 +39,33 @@ public class MainView extends VerticalLayout {
         this.filter = new TextField();
         this.addNewBtn = new Button("New customer", VaadinIcon.PLUS.create());
 
-        HorizontalLayout fileUploadBox = new HorizontalLayout();
-        MemoryBuffer buffer = new MemoryBuffer();
-        Upload upload = new Upload(buffer);
-        upload.addSucceededListener(event -> {
-            Component component = createComponent(event.getMIMEType(),
-                    event.getFileName(), buffer.getInputStream());
-            showOutput(event.getFileName(), component, output);
-        });
-        fileUploadBox.add(upload);
+        //
+        // Implement both receiver that saves upload in a file and
+// listener for successful upload
+        class ImageUploader implements Receiver {
+            public File file;
+
+            public OutputStream receiveUpload(String filename,
+                                              String mimeType) {
+                // Create upload stream
+                FileOutputStream fos = null; // Stream to write to
+                try {
+                    // Open the file for writing.
+                    file = new File("/tmp/uploads/" + filename);
+                    fos = new FileOutputStream(file);
+                } catch (final java.io.FileNotFoundException e) {
+                    return null;
+                }
+                return fos; // Return the output stream to write to
+            }
+
+        }
+        ImageUploader receiver = new ImageUploader();
+
+// Create the upload with a caption and set receiver later
+        Upload upload = new Upload(receiver);
+        upload.setUploadButton(new Button("Start Upload", VaadinIcon.PLUS.create()));
+        //
 
         HorizontalLayout actions = new HorizontalLayout(filter, addNewBtn);
         add(upload, actions, grid, editor);
