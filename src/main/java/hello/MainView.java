@@ -39,34 +39,13 @@ public class MainView extends VerticalLayout {
         this.filter = new TextField();
         this.addNewBtn = new Button("New customer", VaadinIcon.PLUS.create());
 
-        //
-        // Implement both receiver that saves upload in a file and
-// listener for successful upload
-        class ImageUploader implements Receiver {
-            public File file;
-
-            public OutputStream receiveUpload(String filename,
-                                              String mimeType) {
-                // Create upload stream
-                FileOutputStream fos = null; // Stream to write to
-                try {
-                    // Open the file for writing.
-                    file = new File("/tmp/uploads/" + filename);
-                    fos = new FileOutputStream(file);
-                } catch (final java.io.FileNotFoundException e) {
-                    return null;
-                }
-                return fos; // Return the output stream to write to
-            }
-
-        }
-        ImageUploader receiver = new ImageUploader();
-
-// Create the upload with a caption and set receiver later
-        Upload upload = new Upload(receiver);
-        upload.setUploadButton(new Button("Start Upload", VaadinIcon.PLUS.create()));
-        //
-
+        // begin Sammy
+        MemoryBuffer buffer = new MemoryBuffer();
+        Upload upload = new Upload(buffer);
+        upload.addSucceededListener(event ->
+                Notification.show("Uploaded! = "
+        + event.getMIMEType() + " - " + event.getFileName()));
+        // end Sammy
         HorizontalLayout actions = new HorizontalLayout(filter, addNewBtn);
         add(upload, actions, grid, editor);
 
